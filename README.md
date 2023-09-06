@@ -4,7 +4,7 @@ A feature-rich Notes Taking App built using React, Firebase for data storage, an
 
 ## Description
 
-The Firebase Notes App is a full-fledged React-based application that enables users to create, edit, view, and delete notes. It goes beyond basic CRUD operations by incorporating Firebase for real-time data storage and user authentication for secure data access. React Toastify is also integrated to provide user-friendly notification alerts.
+The Firebase Note Taking App is a full-fledged React-based application that enables users to create, edit, view, and delete notes. It goes beyond basic CRUD operations by incorporating Firebase for real-time data storage and user authentication for secure data access. React Toastify is also integrated to provide user-friendly notification alerts.
 
 ## Technologies Used
 
