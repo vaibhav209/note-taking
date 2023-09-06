@@ -1,5 +1,5 @@
-import { Card } from "react-bootstrap";
-import ActionButton from "../ActionButton/ActionButton";
+import { Button, Card } from "react-bootstrap";
+import { PencilSquare, Trash3 } from "react-bootstrap-icons";
 import InputFields from "../InputFields/InputFields";
 
 const NoteCard = ({
@@ -13,35 +13,53 @@ const NoteCard = ({
   editedDescription,
   setEditedDescription,
   saveHandler,
-  cancelHandler
+  cancelHandler,
+  onSaveDisabled,
+  cardBgHandler,
+  keyDownHandler
 }) => {
   return (
     <>
       <Card
         key={index}
+        className="mb-2"
         style={{
-          backgroundColor: item.backgroundColor
+          backgroundColor: item.backgroundColor,
+          width: "20rem",
+          height: index !== editIndex ? "150px" : "100%"
         }}
       >
         <Card.Body>
           {editIndex !== index ? (
             <>
               <Card.Title>{item.title}</Card.Title>
-              <Card.Text className="text-muted">{item.description}</Card.Text>
+              <Card.Text className="text-dark">{item.description}</Card.Text>
+              <Card.Text className="text-muted">{item.createdAt}</Card.Text>
 
-              <div className="d-flex gap-2">
-                <ActionButton
-                  variant="secondary"
-                  onClick={() => editHandler(index)}
-                  size="sm"
-                  btnName="Edit"
-                />
-                <ActionButton
-                  variant="danger"
-                  onClick={() => deleteHandler(index)}
-                  size="sm"
-                  btnName="Delete"
-                />
+              <div className="d-flex justify-content-between">
+                <div className="d-flex justify-content-start">
+                  <Button
+                    variant="outline-dark"
+                    onClick={() => cardBgHandler(index)}
+                    size="sm"
+                  >
+                    Card Theme
+                  </Button>
+                </div>
+
+                <div className="d-flex justify-content-end gap-4">
+                  <PencilSquare
+                    onClick={() => editHandler(index)}
+                    cursor="pointer"
+                    size={24}
+                  />
+
+                  <Trash3
+                    onClick={() => deleteHandler(index)}
+                    cursor="pointer"
+                    size={24}
+                  />
+                </div>
               </div>
             </>
           ) : (
@@ -52,20 +70,20 @@ const NoteCard = ({
                 description={editedDescription}
                 setDescription={setEditedDescription}
                 rows={2}
+                keyDownHandler={keyDownHandler}
               />
               <div className="d-flex gap-2 mt-2">
-                <ActionButton
+                <Button
                   variant="success"
                   onClick={saveHandler}
                   size="sm"
-                  btnName="Save"
-                />
-                <ActionButton
-                  variant="secondary"
-                  onClick={cancelHandler}
-                  size="sm"
-                  btnName="Cancel"
-                />
+                  disabled={onSaveDisabled}
+                >
+                  Save
+                </Button>
+                <Button variant="secondary" onClick={cancelHandler} size="sm">
+                  Cancel
+                </Button>
               </div>
             </>
           )}

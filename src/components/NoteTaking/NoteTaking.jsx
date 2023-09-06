@@ -1,9 +1,20 @@
-import Container from "react-bootstrap/Container";
-import { useState } from "react";
+import { Button, Container, Spinner } from "react-bootstrap/";
+import { useEffect, useState } from "react";
 import InputFields from "../InputFields/InputFields";
-import ActionButton from "../ActionButton/ActionButton";
 import randomColor from "randomcolor";
 import NoteCard from "../NoteCard/NoteCard";
+import { auth, db } from "../../firebase/firebase";
+import { toast } from "react-toastify";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where
+} from "firebase/firestore";
 
 const NoteTaking = () => {
   const [list, setList] = useState([]);
@@ -12,6 +23,7 @@ const NoteTaking = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const resetItem = () => {
     setEditIndex(null);
@@ -19,17 +31,33 @@ const NoteTaking = () => {
     setEditedDescription("");
   };
 
-  const handleAddBtn = () => {
-    if (title.trim() !== "") {
+  const keyDownHandler = (event, action) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      action();
+    }
+  };
+
+  const handleAddBtn = async () => {
+    if (title.trim() !== "" || description.trim() !== "") {
       const newItem = {
         title: title,
         description: description,
-        backgroundColor: randomColor()
+        createdAt: new Date().toLocaleString("en-GB", { hour12: true }),
+        backgroundColor: randomColor(),
+        userId: auth.currentUser.uid
       };
-      setList([...list, newItem]);
+
+      try {
+        await addDoc(collection(db, "notes"), newItem);
+        setList([...list, newItem]);
+
+        setTitle("");
+        setDescription("");
+      } catch (error) {
+        toast.error("An error occurred while creating Note. Please try again.");
+      }
     }
-    setTitle("");
-    setDescription("");
   };
 
   const editHandler = (index) => {
@@ -39,34 +67,96 @@ const NoteTaking = () => {
     setEditedDescription(updateItem.description);
   };
 
-  const saveHandler = () => {
-    const newItem = [...list];
-    newItem[editIndex] = {
-      title: editedTitle,
-      description: editedDescription,
-      backgroundColor: randomColor()
-    };
-    setList(newItem);
+  const saveHandler = async () => {
+    if (editIndex === null || editIndex < 0 || editIndex >= list.length) {
+      toast.error("Invalid edit operation. Please try again.");
+      return;
+    }
 
-    resetItem();
+    try {
+      const noteId = list[editIndex].id;
+      const notesRef = doc(db, "notes", noteId);
+      if (!noteId) {
+        toast.error("An error occurred while saving. Please try again.");
+        return;
+      }
+
+      await updateDoc(notesRef, {
+        title: editedTitle,
+        description: editedDescription,
+        backgroundColor: list[editIndex].backgroundColor,
+        createdAt: new Date().toLocaleString("en-GB", { hour12: true })
+      });
+
+      const newItem = [...list];
+      newItem[editIndex] = {
+        title: editedTitle,
+        description: editedDescription,
+        createdAt: new Date().toLocaleString("en-GB", { hour12: true }),
+        backgroundColor: list[editIndex].backgroundColor,
+        id: noteId
+      };
+      setList(newItem);
+      resetItem();
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
   const cancelHandler = () => {
     resetItem();
   };
 
-  const deleteHandler = (index) => {
-    const newItem = [...list];
-    newItem.splice(index, 1);
-    setList(newItem);
-  };
+  const deleteHandler = async (index) => {
+    if (index < 0 || index >= list.length) {
+      toast.error("Invalid delete operation. Please try again.");
+    }
+    try {
+      const noteRef = doc(db, "notes", list[index].id);
+      await deleteDoc(noteRef);
 
-  const keyDownHandler = (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      handleAddBtn();
+      const newItem = [...list];
+      newItem.splice(index, 1);
+      setList(newItem);
+    } catch (error) {
+      toast.error("An error occurred while deleting. Please try again.");
     }
   };
+
+  const cardBgHandler = (index) => {
+    const updatedList = [...list];
+    updatedList[index].backgroundColor = randomColor();
+    setList(updatedList);
+  };
+
+  const loadUsersData = async () => {
+    if (!auth.currentUser) {
+      setIsLoading(false);
+      return;
+    }
+
+    const currentUserQuery = query(
+      collection(db, "notes"),
+      where("userId", "==", auth.currentUser.uid)
+    );
+
+    try {
+      const querySnapshot = await getDocs(currentUserQuery);
+      let notesArray = [];
+
+      querySnapshot.forEach((doc) => {
+        notesArray.push({ ...doc.data(), id: doc.id });
+      });
+
+      setList(notesArray);
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(() => {
+    loadUsersData();
+  }, []);
 
   return (
     <>
@@ -77,18 +167,30 @@ const NoteTaking = () => {
           description={description}
           setDescription={setDescription}
           rows={3}
-          keyDownHandler={keyDownHandler}
+          keyDownHandler={(e) => keyDownHandler(e, handleAddBtn)}
         />
         <div className="d-flex justify-content-end mt-3">
-          <ActionButton
-            variant="primary"
-            onClick={handleAddBtn}
-            btnName="New Note"
-          />
+          <Button variant="primary" onClick={handleAddBtn}>
+            New Note
+          </Button>
         </div>
       </Container>
 
-      {list.length > 0 ? (
+      {isLoading ? (
+        <div className="d-flex justify-content-center align-items-center mt-5">
+          <Spinner
+            animation="border"
+            variant="dark"
+            style={{ width: "3rem", height: "3rem" }}
+          />
+        </div>
+      ) : !list.length ? (
+        <div className="mt-5">
+          <h3 className="text-center display-2 text-dark">
+            Oops! Your Notes are Empty
+          </h3>
+        </div>
+      ) : (
         <div className="container d-flex flex-row flex-wrap gap-4 mt-4">
           {list.map((item, index) => {
             return (
@@ -104,15 +206,12 @@ const NoteTaking = () => {
                 setEditedDescription={setEditedDescription}
                 saveHandler={saveHandler}
                 cancelHandler={cancelHandler}
+                onSaveDisabled={!editedTitle}
+                cardBgHandler={cardBgHandler}
+                keyDownHandler={(e) => keyDownHandler(e, saveHandler)}
               />
             );
           })}
-        </div>
-      ) : (
-        <div className="mt-5">
-          <h3 className="text-center display-2 text-dark">
-            Oops! Your Notes are Empty
-          </h3>
         </div>
       )}
     </>
