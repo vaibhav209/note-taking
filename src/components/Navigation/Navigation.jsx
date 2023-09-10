@@ -1,3 +1,15 @@
+// import { Button, NavDropdown } from "react-bootstrap";
+// import { Person, Sticky } from "react-bootstrap-icons";
+// import { toast } from "react-toastify";
+// import { Nav, Navbar, Container } from "react-bootstrap/";
+// import { NavLink, useLocation } from "react-router-dom";
+// import routes from "../../routes/routes.json";
+// import { useContext, useState } from "react";
+// import InstructionsModal from "../InstructionsModal/InstructionsModal";
+// import { UserContext } from "../../contexts/UserContext";
+// import { auth } from "../../firebase/firebase";
+// import { signOut } from "firebase/auth";
+
 import { Button, NavDropdown } from "react-bootstrap";
 import { Person, Sticky } from "react-bootstrap-icons";
 import { toast } from "react-toastify";
@@ -5,8 +17,10 @@ import { Nav, Navbar, Container } from "react-bootstrap/";
 import { NavLink, useLocation } from "react-router-dom";
 import routes from "../../routes/routes.json";
 import { useContext, useState } from "react";
-import { AuthContext } from "../../contexts/AuthContext";
 import InstructionsModal from "../InstructionsModal/InstructionsModal";
+import { UserContext } from "../../contexts/UserContext";
+import { auth } from "../../firebase/firebase";
+import { signOut } from "firebase/auth";
 
 const Naviagtion = () => {
     const [show, setShow] = useState(false);
@@ -19,17 +33,16 @@ const Naviagtion = () => {
     };
 
     const location = useLocation();
-    const { logoutHandler } = useContext(AuthContext);
+    const { userIdentity, resetUserIdentity } = useContext(UserContext);
 
     const handleLogout = () => {
-        logoutHandler();
+        signOut(auth);
         toast.info("Logout successful. Come back anytime!");
+        resetUserIdentity();
     };
 
     const isAuthPage =
         location.pathname === routes.LOGIN || location.pathname === routes.SIGNUP;
-
-    const isLocationState = location.state;
 
     return (
         <>
@@ -45,16 +58,17 @@ const Naviagtion = () => {
                         {!isAuthPage && (
                             <>
                                 <Person size={24} />
-                                {isLocationState && location.state.email
-                                    ? location.state.email
-                                    : ""}
-
+                                {userIdentity && userIdentity.email}
                                 <NavDropdown
                                     align="end"
                                     style={{ margin: "0px 10px 0px 10px" }}
                                 >
                                     <NavDropdown.Item
-                                        style={{ fontWeight: 600, color: "red" }}
+                                        style={{
+                                            fontWeight: 600,
+                                            backgroundColor: "#f8f9fa",
+                                            color: "red"
+                                        }}
                                         onClick={handleLogout}
                                     >
                                         Logout
