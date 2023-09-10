@@ -1,15 +1,3 @@
-// import { Button, NavDropdown } from "react-bootstrap";
-// import { Person, Sticky } from "react-bootstrap-icons";
-// import { toast } from "react-toastify";
-// import { Nav, Navbar, Container } from "react-bootstrap/";
-// import { NavLink, useLocation } from "react-router-dom";
-// import routes from "../../routes/routes.json";
-// import { useContext, useState } from "react";
-// import InstructionsModal from "../InstructionsModal/InstructionsModal";
-// import { UserContext } from "../../contexts/UserContext";
-// import { auth } from "../../firebase/firebase";
-// import { signOut } from "firebase/auth";
-
 import { Button, NavDropdown } from "react-bootstrap";
 import { Person, Sticky } from "react-bootstrap-icons";
 import { toast } from "react-toastify";
@@ -36,6 +24,7 @@ const Naviagtion = () => {
     const { userIdentity, resetUserIdentity } = useContext(UserContext);
 
     const handleLogout = () => {
+        sessionStorage.clear();
         signOut(auth);
         toast.info("Logout successful. Come back anytime!");
         resetUserIdentity();
