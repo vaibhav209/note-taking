@@ -3,24 +3,24 @@ import routes from "../../routes/routes.json";
 import { toast } from "react-toastify";
 import UserForm from "../UserForm/UserForm";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../contexts/AuthContext";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase/firebase";
+import { UserContext } from "../../contexts/UserContext";
 
 const LoginForm = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const navigate = useNavigate();
-    const { loginHandler } = useContext(AuthContext);
+    const { updateUserIdentity } = useContext(UserContext);
 
     const handleLogin = async () => {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             toast.success("Login successful. Enjoy!");
-            loginHandler();
+            updateUserIdentity({ email });
 
-            navigate(routes.HOME, { state: { email } });
+            navigate(routes.HOME);
         } catch (error) {
             const isError = error.code;
             if (isError === "auth/user-not-found") {
