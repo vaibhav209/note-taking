@@ -1,13 +1,11 @@
-import AuthProvider from "./contexts/AuthContext";
+import UserProvider from "./contexts/UserContext";
 import PageRoutes from "./routes/PageRoutes";
 import "./styles.css";
 
 export default function App() {
   return (
-    <div className="App">
-      <AuthProvider>
-        <PageRoutes />
-      </AuthProvider>
-    </div>
+    <UserProvider>
+      <PageRoutes />
+    </UserProvider>
   );
 }
