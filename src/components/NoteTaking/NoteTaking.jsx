@@ -15,6 +15,9 @@ import {
   updateDoc,
   where
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import routes from "../../routes/routes.json";
 
 const NoteTaking = () => {
   const [list, setList] = useState([]);
@@ -24,6 +27,8 @@ const NoteTaking = () => {
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   const resetItem = () => {
     setEditIndex(null);
@@ -38,6 +43,33 @@ const NoteTaking = () => {
     }
   };
 
+  const getAllNotes = async () => {
+    //update data in firestore
+    const currentUserQuery = query(
+      collection(db, "notes"),
+      where("userId", "==", auth.currentUser.uid)
+    );
+
+    try {
+      const querySnapshot = await getDocs(currentUserQuery);
+      let notesArray = [];
+
+      querySnapshot.forEach((doc) => {
+        notesArray.push({ ...doc.data(), id: doc.id });
+      });
+
+      //session storage
+      sessionStorage.setItem("noteData", JSON.stringify(notesArray));
+
+      //update data locally
+      setList(notesArray);
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  /* */
+
   const handleAddBtn = async () => {
     if (title.trim() !== "" || description.trim() !== "") {
       const newItem = {
@@ -50,7 +82,7 @@ const NoteTaking = () => {
 
       try {
         await addDoc(collection(db, "notes"), newItem);
-        setList([...list, newItem]);
+        await getAllNotes();
 
         setTitle("");
         setDescription("");
@@ -134,29 +166,26 @@ const NoteTaking = () => {
       setIsLoading(false);
       return;
     }
-
-    const currentUserQuery = query(
-      collection(db, "notes"),
-      where("userId", "==", auth.currentUser.uid)
-    );
-
-    try {
-      const querySnapshot = await getDocs(currentUserQuery);
-      let notesArray = [];
-
-      querySnapshot.forEach((doc) => {
-        notesArray.push({ ...doc.data(), id: doc.id });
-      });
-
-      setList(notesArray);
-      setIsLoading(false);
-    } catch (error) {
-      console.error(error);
-    }
+    getAllNotes();
   };
+
   useEffect(() => {
-    loadUsersData();
+    const storedNote = sessionStorage.getItem("noteData");
+
+    if (storedNote) {
+      const parseNoteData = JSON.parse(storedNote);
+      setList(parseNoteData);
+      setIsLoading(false);
+    } else {
+      loadUsersData();
+    }
   }, []);
+
+  onAuthStateChanged(auth, (currentUser) => {
+    if (!currentUser) {
+      navigate(routes.LOGIN);
+    }
+  });
 
   return (
     <>
