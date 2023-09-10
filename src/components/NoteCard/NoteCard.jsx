@@ -26,7 +26,7 @@ const NoteCard = ({
         style={{
           backgroundColor: item.backgroundColor,
           width: "20rem",
-          height: index !== editIndex ? "150px" : "100%"
+          height: index !== editIndex ? "100%" : ""
         }}
       >
         <Card.Body>
