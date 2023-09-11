@@ -161,31 +161,43 @@ const NoteTaking = () => {
     setList(updatedList);
   };
 
-  const loadUsersData = async () => {
-    if (!auth.currentUser) {
-      setIsLoading(false);
-      return;
-    }
-    getAllNotes();
-  };
+  // const loadUsersData = () => {
+  //   if (!auth.currentUser) {
+  //     setIsLoading(false);
+  //     return;
+  //   }
+  //   getAllNotes();
+  // };
 
   useEffect(() => {
     const storedNote = sessionStorage.getItem("noteData");
+
+    const checkAuthAndLoadData = async () => {
+      if (auth.currentUser) {
+        await getAllNotes();
+      } else {
+        navigate(routes.LOGIN);
+      }
+    };
+
+
 
     if (storedNote) {
       const parseNoteData = JSON.parse(storedNote);
       setList(parseNoteData);
       setIsLoading(false);
     } else {
-      loadUsersData();
+      // loadUsersData();
+      checkAuthAndLoadData();
     }
   }, []);
-
+  
   onAuthStateChanged(auth, (currentUser) => {
     if (!currentUser) {
       navigate(routes.LOGIN);
     }
   });
+
 
   return (
     <>
